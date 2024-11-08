@@ -103,7 +103,7 @@ fun parseLogEntry(message: String): LogEntry? {
         val (dateString, timeString, type, logMessage) = matchResult.destructured
         val dateTime =
             LocalDateTime.parse("$dateString $timeString", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-        LogEntry(dateTime, logMessage)
+        LogEntry(dateTime = dateTime, message = logMessage, type = type)
     } else {
         System.err.println("Unparsable data: $message")
         null
@@ -112,5 +112,6 @@ fun parseLogEntry(message: String): LogEntry? {
 
 data class LogEntry(
     val dateTime: LocalDateTime,
-    val message: String
+    val message: String,
+    val type: String,
 )
