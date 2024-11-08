@@ -1,5 +1,6 @@
 package com.example.controllers
 
+import com.example.app.GameMonitor
 import com.example.app.MinecraftProcess
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -9,7 +10,8 @@ import org.koin.ktor.ext.inject
 
 
 fun Application.configureProcessController() {
-    val minecraftProcessInstance: MinecraftProcess by inject<MinecraftProcess>()
+    val minecraftProcessInstance: MinecraftProcess by inject()
+    val gameMonitor: GameMonitor by inject()
 
     routing {
         get("/start") {
@@ -35,8 +37,7 @@ fun Application.configureProcessController() {
             if (!minecraftProcessInstance.isRunning) {
                 call.respondText("Not running")
             } else {
-                minecraftProcessInstance.stop()
-                call.respondText("Process Stopped")
+                call.respondText(gameMonitor.connectedPlayerFlow.value.joinToString("\n") { it.username })
             }
         }
 
