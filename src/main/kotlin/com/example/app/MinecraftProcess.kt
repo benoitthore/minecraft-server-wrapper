@@ -37,6 +37,7 @@ interface MinecraftProcess {
     }
 }
 
+
 class MinecraftProcessImpl(
     processToRun: String,
     memorySize: Int = 300,

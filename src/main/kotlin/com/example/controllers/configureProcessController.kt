@@ -1,38 +1,47 @@
 package com.example.controllers
 
 import com.example.app.MinecraftProcess
-import com.example.app.MinecraftProcessImpl
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.koin.ktor.ext.inject
 
-val MinecraftProcessInstance: MinecraftProcess by lazy {
-    MinecraftProcessImpl("C:\\Users\\Bebeuz\\Desktop\\Bedrock Server\\bedrock_server.exe")
-}
 
 fun Application.configureProcessController() {
+    val minecraftProcessInstance: MinecraftProcess by inject<MinecraftProcess>()
+
     routing {
         get("/start") {
-            if (MinecraftProcessInstance.isRunning) {
+            if (minecraftProcessInstance.isRunning) {
                 call.respondText("Already Started")
             } else {
-                MinecraftProcessInstance.run()
+                minecraftProcessInstance.run()
                 call.respondText("Process Started")
             }
         }
 
         get("/stop") {
-            if (!MinecraftProcessInstance.isRunning) {
+            if (!minecraftProcessInstance.isRunning) {
                 call.respondText("Already Stopped")
             } else {
-                MinecraftProcessInstance.stop()
+                minecraftProcessInstance.stop()
+                call.respondText("Process Stopped")
+            }
+        }
+
+
+        get("/stats") {
+            if (!minecraftProcessInstance.isRunning) {
+                call.respondText("Not running")
+            } else {
+                minecraftProcessInstance.stop()
                 call.respondText("Process Stopped")
             }
         }
 
         get("/messages") {
-            call.respondText(MinecraftProcessInstance.eventFlow.replayCache.toList().joinToString(separator = "\n") {
+            call.respondText(minecraftProcessInstance.eventFlow.replayCache.toList().joinToString(separator = "\n") {
                 when(it){
                     is MinecraftProcess.Event.LogEvent -> with(it.entry){"$dateTime - $message"}
                     MinecraftProcess.Event.ProcessStopped -> "Process Stopped"
@@ -46,7 +55,7 @@ fun Application.configureProcessController() {
             if (cmd.isNullOrBlank()) {
                 call.respondText("Command not provided", status = HttpStatusCode.BadRequest)
             } else {
-                MinecraftProcessInstance.sendCommand(MinecraftProcess.Command.RawCommand(cmd))
+                minecraftProcessInstance.sendCommand(MinecraftProcess.Command.RawCommand(cmd))
                 call.respondText("Command sent: $cmd")
             }
         }

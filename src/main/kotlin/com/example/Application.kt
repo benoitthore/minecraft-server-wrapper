@@ -9,6 +9,9 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
+
+    configureDependencies()
+
     configureSockets()
     configureSerialization()
     configureMonitoring()

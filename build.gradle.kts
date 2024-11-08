@@ -33,8 +33,10 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("io.ktor:ktor-server-config-yaml")
 
-
+    implementation("io.insert-koin:koin-core:4.0.0")
     implementation("io.insert-koin:koin-ktor:4.0.0")
+    runtimeOnly("io.insert-koin:koin-core:4.0.0")
+
 
 
     testImplementation("io.ktor:ktor-server-test-host-jvm")
