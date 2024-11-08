@@ -22,6 +22,11 @@ interface MinecraftProcess {
 
     sealed interface Command {
         fun executableCommand(): String
+
+        data class RawCommand(val message: String) : Command{
+            override fun executableCommand() = message
+        }
+
         data class Say(val message: String) : Command {
             override fun executableCommand(): String = "say $message"
         }
@@ -29,12 +34,13 @@ interface MinecraftProcess {
 
     sealed interface Event {
         data object ProcessStopped : Event
+        data class LogEvent(val entry : LogEntry) : Event
     }
 }
 
 class MinecraftProcessImpl(
     processToRun: String,
-    memorySize: Int = 10,
+    memorySize: Int = 300,
     private val scope: CoroutineScope = GlobalScope
 ) : MinecraftProcess {
 
@@ -50,14 +56,14 @@ class MinecraftProcessImpl(
     override val eventFlow: SharedFlow<Event> get() = _eventFlow.asSharedFlow()
 
     private var process: Process? = null
-    private val inputQueue = ConcurrentLinkedQueue<String>()
 
     override val isRunning: Boolean get() = job?.isActive ?: false
 
     override fun run() {
+        if (isRunning) throw IllegalStateException("Process is already running")
+
         job = scope.launch {
             withContext(Dispatchers.IO) {
-                if (isRunning) throw IllegalStateException("Process is already running")
                 process = ProcessBuilder(fileToRun.absolutePath)
                     .redirectErrorStream(true)
                     .start()
@@ -86,8 +92,9 @@ class MinecraftProcessImpl(
             launch {
                 process?.inputStream?.bufferedReader()?.use { reader ->
                     reader.forEachLine { line ->
-                        parseLogEntry(line)
-                        inputQueue.offer(line)
+                        parseLogEntry(line)?.let {
+                            _eventFlow.tryEmit(Event.LogEvent(it))
+                        }
                     }
                 }
             }
@@ -97,7 +104,7 @@ class MinecraftProcessImpl(
 
 fun parseLogEntry(message: String): LogEntry? {
     // [2024-01-01 18:59:22:123 INFO] the message
-    val pattern = "\\[(\\d{4}-\\d{2}-\\d{2})\\s(\\d{2}:\\d{2}:\\d{2}):\\d{3}\\s(\\w+)]\\s(.+)".toRegex()
+    val pattern = ".*\\[(\\d{4}-\\d{2}-\\d{2})\\s(\\d{2}:\\d{2}:\\d{2}):\\d{3}\\s(\\w+)]\\s(.+)".toRegex()
     val matchResult = pattern.matchEntire(message)
     return if (matchResult != null) {
         val (dateString, timeString, type, logMessage) = matchResult.destructured
