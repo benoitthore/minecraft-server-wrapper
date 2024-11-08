@@ -93,22 +93,24 @@ class MinecraftProcessImpl(
             }
         }
     }
-
-    private fun parseLogEntry(message: String): LogEntry {
-        val pattern = "\\[(\\d{4}-\\d{2}-\\d{2}) (\\d{2}:\\d{2}:\\d{2}):(\\d+)] (.+)".toRegex()
-        val matchResult = pattern.matchEntire(message)
-        return if (matchResult != null) {
-            val (_, dateString, timeString, _, logMessage) = matchResult.destructured
-            val dateTime =
-                LocalDateTime.parse("$dateString $timeString", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-            LogEntry(dateTime, logMessage)
-        } else {
-            LogEntry(LocalDateTime.now(), message)
-        }
-    }
-
-    private data class LogEntry(
-        val dateTime: LocalDateTime,
-        val message: String
-    )
 }
+
+fun parseLogEntry(message: String): LogEntry? {
+    // [2024-01-01 18:59:22:123 INFO] the message
+    val pattern = "\\[(\\d{4}-\\d{2}-\\d{2})\\s(\\d{2}:\\d{2}:\\d{2}):\\d{3}\\s(\\w+)]\\s(.+)".toRegex()
+    val matchResult = pattern.matchEntire(message)
+    return if (matchResult != null) {
+        val (dateString, timeString, type, logMessage) = matchResult.destructured
+        val dateTime =
+            LocalDateTime.parse("$dateString $timeString", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        LogEntry(dateTime, logMessage)
+    } else {
+        System.err.println("Unparsable data: $message")
+        null
+    }
+}
+
+data class LogEntry(
+    val dateTime: LocalDateTime,
+    val message: String
+)

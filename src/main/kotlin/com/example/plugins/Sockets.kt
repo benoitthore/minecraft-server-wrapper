@@ -1,5 +1,6 @@
 package com.example.plugins
 
+import com.example.controllers.MinecraftProcessInstance
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
@@ -14,7 +15,12 @@ fun Application.configureSockets() {
         masking = false
     }
     routing {
-        webSocket("/ws") { // websocketSession
+        webSocket("/ws") {
+            MinecraftProcessInstance.eventFlow.collect { event ->
+                outgoing.send(Frame.Text(event.toString()))
+            }
+        }
+        webSocket("/NOT_USED") { // websocketSession
             for (frame in incoming) {
                 if (frame is Frame.Text) {
                     val text = frame.readText()
