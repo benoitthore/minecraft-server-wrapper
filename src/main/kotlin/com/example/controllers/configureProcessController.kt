@@ -42,9 +42,12 @@ fun Application.configureProcessController() {
 
         get("/messages") {
             call.respondText(minecraftProcessInstance.eventFlow.replayCache.toList().joinToString(separator = "\n") {
-                when(it){
-                    is MinecraftProcess.Event.LogEvent -> with(it.entry){"$dateTime - $message"}
-                    MinecraftProcess.Event.ProcessStopped -> "Process Stopped"
+                when (it) {
+                    is MinecraftProcess.Event.LogEvent -> with(it) { "$time - $message" }
+                    is MinecraftProcess.Event.ProcessStopped -> "Process Stopped"
+                    is MinecraftProcess.Event.PlayerEvent -> {
+                        "${it.player.username} ${it::class}"
+                    }
                 }
 
             })

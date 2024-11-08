@@ -22,7 +22,7 @@ interface MinecraftProcess {
     sealed interface Command {
         fun executableCommand(): String
 
-        data class RawCommand(val message: String) : Command{
+        data class RawCommand(val message: String) : Command {
             override fun executableCommand() = message
         }
 
@@ -32,8 +32,34 @@ interface MinecraftProcess {
     }
 
     sealed interface Event {
-        data object ProcessStopped : Event
-        data class LogEvent(val entry : LogEntry) : Event
+        val time: LocalDateTime
+
+        data class ProcessStopped(override val time: LocalDateTime = LocalDateTime.now()) : Event
+
+        sealed interface PlayerEvent : Event {
+            val player: Player
+        }
+
+        data class OnPlayerConnected(
+            override val player: Player,
+            override val time: LocalDateTime = LocalDateTime.now()
+        ) : PlayerEvent
+
+        data class OnPlayerDisconnected(
+            override val player: Player,
+            override val time: LocalDateTime = LocalDateTime.now()
+        ) : PlayerEvent
+
+        data class OnPlayerSpawned(
+            override val player: Player,
+            override val time: LocalDateTime = LocalDateTime.now()
+        ) : PlayerEvent
+
+        data class LogEvent(
+            override val time: LocalDateTime,
+            val message: String,
+            val type: String,
+        ) : Event
     }
 }
 
@@ -83,7 +109,7 @@ class MinecraftProcessImpl(
 
     override suspend fun stop(): Unit = withContext(Dispatchers.IO) {
         process?.destroy()
-        _eventFlow.emit(Event.ProcessStopped)
+        _eventFlow.emit(Event.ProcessStopped())
         job?.cancelAndJoin()
     }
 
@@ -92,9 +118,15 @@ class MinecraftProcessImpl(
             launch {
                 process?.inputStream?.bufferedReader()?.use { reader ->
                     reader.forEachLine { line ->
-                        parseLogEntry(line)?.let {
-                            _eventFlow.tryEmit(Event.LogEvent(it))
-                        }
+                        parseLogEntry(line)?.let(_eventFlow::tryEmit)
+
+                        listOf(
+                            ::parsePlayerConnectedMessage,
+                            ::parsePlayerDisconnectedMessage,
+                            ::parsePlayerSpawnedMessage,
+                        )
+                            .map { it(line) }
+                            .forEach(_eventFlow::tryEmit)
                     }
                 }
             }
@@ -102,23 +134,44 @@ class MinecraftProcessImpl(
     }
 }
 
-fun parseLogEntry(message: String): LogEntry? {
-    // [2024-01-01 18:59:22:123 INFO] the message
+fun parsePlayerConnectedMessage(message: String): Event.OnPlayerConnected {
+    val regex = "Player connected: ([^,]+), xuid: (\\d+)".toRegex()
+    val matchResult = regex.find(message) ?: throw IllegalArgumentException("Invalid player connected message format")
+    val (username, xuid) = matchResult.destructured
+    return Event.OnPlayerConnected(
+        player = Player(username = username, xuid = xuid)
+    )
+}
+
+fun parsePlayerDisconnectedMessage(message: String): Event.OnPlayerDisconnected {
+    val regex = "Player disconnected: ([^,]+), xuid: (\\d+), pfid: ([\\da-f]+)".toRegex()
+    val matchResult =
+        regex.find(message) ?: throw IllegalArgumentException("Invalid player disconnected message format")
+    val (username, xuid, pfid) = matchResult.destructured
+    return Event.OnPlayerDisconnected(
+        player = Player(username = username, xuid = xuid, pfid = pfid)
+    )
+}
+
+fun parsePlayerSpawnedMessage(message: String): Event.OnPlayerSpawned {
+    val regex = "Player Spawned: ([^ ]+) xuid: (\\d+), pfid: ([\\da-f]+)".toRegex()
+    val matchResult = regex.find(message) ?: throw IllegalArgumentException("Invalid player spawned message format")
+    val (username, xuid, pfid) = matchResult.destructured
+    return Event.OnPlayerSpawned(
+        player = Player(username = username, xuid = xuid, pfid = pfid)
+    )
+}
+
+fun parseLogEntry(message: String): Event.LogEvent? {
     val pattern = ".*\\[(\\d{4}-\\d{2}-\\d{2})\\s(\\d{2}:\\d{2}:\\d{2}):\\d{3}\\s(\\w+)]\\s(.+)".toRegex()
     val matchResult = pattern.matchEntire(message)
     return if (matchResult != null) {
         val (dateString, timeString, type, logMessage) = matchResult.destructured
         val dateTime =
             LocalDateTime.parse("$dateString $timeString", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-        LogEntry(dateTime = dateTime, message = logMessage, type = type)
+        Event.LogEvent(time = dateTime, message = logMessage, type = type)
     } else {
         System.err.println("Unparsable data: $message")
         null
     }
 }
-
-data class LogEntry(
-    val dateTime: LocalDateTime,
-    val message: String,
-    val type: String,
-)
