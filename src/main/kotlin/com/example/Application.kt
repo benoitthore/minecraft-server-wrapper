@@ -14,5 +14,6 @@ fun Application.module() {
     configureMonitoring()
     configureSecurity()
     configureStaticRouting()
+
     configureProcessController()
 }
