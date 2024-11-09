@@ -37,10 +37,15 @@ fun Application.configureProcessController() {
             if (!minecraftProcessInstance.isRunning) {
                 call.respondText("Not running")
             } else {
-                call.respondText(gameMonitor.connectedPlayerFlow.value.joinToString("\n") { it.username } + "\n.")
+                val list = gameMonitor.connectedPlayerFlow.value
+                if (list.isEmpty()) {
+                    call.respondText("yA PERSOnne COnnard")
+                } else {
+                    call.respondText(list.joinToString("\n") { it.username })
+
+                }
             }
         }
-
 
         get("/kill") {
             if (!minecraftProcessInstance.isRunning) {
