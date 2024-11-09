@@ -13,6 +13,8 @@ fun Application.configureProcessController() {
     val minecraftProcessInstance: MinecraftProcess by inject()
     val gameMonitor: GameMonitor by inject()
 
+    minecraftProcessInstance.run()
+
     routing {
         get("/start") {
             if (minecraftProcessInstance.isRunning) {
