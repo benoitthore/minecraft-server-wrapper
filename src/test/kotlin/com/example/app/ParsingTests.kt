@@ -33,8 +33,8 @@ class ParsingTests {
         val result = parsePlayerConnectedMessage(message)
 
         // then
-        assertEquals("Bebeuz76", result.player.username)
-        assertEquals("2533274908113115", result.player.xuid)
+        assertEquals("Bebeuz76", result?.player?.username)
+        assertEquals("2533274908113115", result?.player?.xuid)
     }
 
     @Test
@@ -46,8 +46,8 @@ class ParsingTests {
         val result = parsePlayerConnectedMessage(message)
 
         // then
-        assertEquals("Player_123-[ABC]", result.player.username)
-        assertEquals("2533274908113115", result.player.xuid)
+        assertEquals("Player_123-[ABC]", result?.player?.username)
+        assertEquals("2533274908113115", result?.player?.xuid)
     }
 
     @Test
@@ -56,8 +56,8 @@ class ParsingTests {
         val message = "Invalid message format"
 
         // then
-        assertThrows<IllegalArgumentException> {
-            parsePlayerConnectedMessage(message)
+        assertThrows<NullPointerException> {
+            parsePlayerConnectedMessage(message)!!
         }
     }
 
@@ -70,9 +70,9 @@ class ParsingTests {
         val result = parsePlayerDisconnectedMessage(message)
 
         // then
-        assertEquals("Bebeuz76", result.player.username)
-        assertEquals("2533274908113115", result.player.xuid)
-        assertEquals("2ce3b0927e996530", result.player.pfid)
+        assertEquals("Bebeuz76", result?.player?.username)
+        assertEquals("2533274908113115", result?.player?.xuid)
+        assertEquals("2ce3b0927e996530", result?.player?.pfid)
     }
 
     @Test
@@ -84,9 +84,9 @@ class ParsingTests {
         val result = parsePlayerDisconnectedMessage(message)
 
         // then
-        assertEquals("Player_123-[ABC]", result.player.username)
-        assertEquals("2533274908113115", result.player.xuid)
-        assertEquals("2ce3b0927e996530", result.player.pfid)
+        assertEquals("Player_123-[ABC]", result?.player?.username)
+        assertEquals("2533274908113115", result?.player?.xuid)
+        assertEquals("2ce3b0927e996530", result?.player?.pfid)
     }
 
     @Test
@@ -95,8 +95,8 @@ class ParsingTests {
         val message = "Invalid message format"
 
         // then
-        assertThrows<IllegalArgumentException> {
-            parsePlayerDisconnectedMessage(message)
+        assertThrows<NullPointerException> {
+            parsePlayerDisconnectedMessage(message)!!
         }
     }
 
@@ -109,9 +109,9 @@ class ParsingTests {
         val result = parsePlayerSpawnedMessage(message)
 
         // then
-        assertEquals("Bebeuz76", result.player.username)
-        assertEquals("2533274908113115", result.player.xuid)
-        assertEquals("2ce3b0927e996530", result.player.pfid)
+        assertEquals("Bebeuz76", result?.player?.username)
+        assertEquals("2533274908113115", result?.player?.xuid)
+        assertEquals("2ce3b0927e996530", result?.player?.pfid)
     }
 
     @Test
@@ -123,9 +123,9 @@ class ParsingTests {
         val result = parsePlayerSpawnedMessage(message)
 
         // then
-        assertEquals("Player_123-[ABC]", result.player.username)
-        assertEquals("2533274908113115", result.player.xuid)
-        assertEquals("2ce3b0927e996530", result.player.pfid)
+        assertEquals("Player_123-[ABC]", result?.player?.username)
+        assertEquals("2533274908113115", result?.player?.xuid)
+        assertEquals("2ce3b0927e996530", result?.player?.pfid)
     }
 
     @Test
@@ -134,8 +134,8 @@ class ParsingTests {
         val message = "Invalid message format"
 
         // then
-        assertThrows<IllegalArgumentException> {
-            parsePlayerSpawnedMessage(message)
+        assertThrows<NullPointerException> {
+            parsePlayerSpawnedMessage(message)!!
         }
     }
 
@@ -145,8 +145,8 @@ class ParsingTests {
         val message = "Player Spawned: Bebeuz76 xuid: 2533274908113115"
 
         // then
-        assertThrows<IllegalArgumentException> {
-            parsePlayerSpawnedMessage(message)
+        assertThrows<NullPointerException> {
+            parsePlayerSpawnedMessage(message)!!
         }
     }
 
@@ -165,10 +165,10 @@ class ParsingTests {
         val disconnected = parsePlayerDisconnectedMessage(logMessages[2])
 
         // then
-        assertEquals(connected.player.username, spawned.player.username)
-        assertEquals(connected.player.username, disconnected.player.username)
-        assertEquals(connected.player.xuid, spawned.player.xuid)
-        assertEquals(connected.player.xuid, disconnected.player.xuid)
-        assertEquals(spawned.player.pfid, disconnected.player.pfid)
+        assertEquals(connected?.player?.username, spawned?.player?.username)
+        assertEquals(connected?.player?.username, disconnected?.player?.username)
+        assertEquals(connected?.player?.xuid, spawned?.player?.xuid)
+        assertEquals(connected?.player?.xuid, disconnected?.player?.xuid)
+        assertEquals(spawned?.player?.pfid, disconnected?.player?.pfid)
     }
 }

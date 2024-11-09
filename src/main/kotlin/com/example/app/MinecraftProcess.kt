@@ -126,7 +126,9 @@ class MinecraftProcessImpl(
                             ::parsePlayerSpawnedMessage,
                         )
                             .map { it(line) }
-                            .forEach(_eventFlow::tryEmit)
+                            .forEach {
+                                it?.let(_eventFlow::tryEmit)
+                            }
                     }
                 }
             }
@@ -134,28 +136,28 @@ class MinecraftProcessImpl(
     }
 }
 
-fun parsePlayerConnectedMessage(message: String): Event.OnPlayerConnected {
+fun parsePlayerConnectedMessage(message: String): Event.OnPlayerConnected? {
     val regex = "Player connected: ([^,]+), xuid: (\\d+)".toRegex()
-    val matchResult = regex.find(message) ?: throw IllegalArgumentException("Invalid player connected message format")
+    val matchResult = regex.find(message) ?: return null
     val (username, xuid) = matchResult.destructured
     return Event.OnPlayerConnected(
         player = Player(username = username, xuid = xuid)
     )
 }
 
-fun parsePlayerDisconnectedMessage(message: String): Event.OnPlayerDisconnected {
+fun parsePlayerDisconnectedMessage(message: String): Event.OnPlayerDisconnected? {
     val regex = "Player disconnected: ([^,]+), xuid: (\\d+), pfid: ([\\da-f]+)".toRegex()
     val matchResult =
-        regex.find(message) ?: throw IllegalArgumentException("Invalid player disconnected message format")
+        regex.find(message) ?: return null
     val (username, xuid, pfid) = matchResult.destructured
     return Event.OnPlayerDisconnected(
         player = Player(username = username, xuid = xuid, pfid = pfid)
     )
 }
 
-fun parsePlayerSpawnedMessage(message: String): Event.OnPlayerSpawned {
+fun parsePlayerSpawnedMessage(message: String): Event.OnPlayerSpawned? {
     val regex = "Player Spawned: ([^ ]+) xuid: (\\d+), pfid: ([\\da-f]+)".toRegex()
-    val matchResult = regex.find(message) ?: throw IllegalArgumentException("Invalid player spawned message format")
+    val matchResult = regex.find(message) ?: return null
     val (username, xuid, pfid) = matchResult.destructured
     return Event.OnPlayerSpawned(
         player = Player(username = username, xuid = xuid, pfid = pfid)
