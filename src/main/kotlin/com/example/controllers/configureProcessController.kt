@@ -37,7 +37,20 @@ fun Application.configureProcessController() {
             if (!minecraftProcessInstance.isRunning) {
                 call.respondText("Not running")
             } else {
-                call.respondText(gameMonitor.connectedPlayerFlow.value.joinToString("\n") { it.username })
+                call.respondText(gameMonitor.connectedPlayerFlow.value.joinToString("\n") { it.username } + "\n.")
+            }
+        }
+
+
+        get("/kill") {
+            if (!minecraftProcessInstance.isRunning) {
+                call.respondText("Not running")
+            } else {
+                val playerName = call.request.queryParameters["player"]
+                    ?: return@get call.respondText("player parameter required")
+
+                minecraftProcessInstance.sendCommand(MinecraftProcess.Command.Kill(playerName))
+                call.respondText(".")
             }
         }
 

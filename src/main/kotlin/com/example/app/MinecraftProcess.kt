@@ -29,6 +29,10 @@ interface MinecraftProcess {
         data class Say(val message: String) : Command {
             override fun executableCommand(): String = "say $message"
         }
+
+        data class Kill(val player: String) : Command {
+            override fun executableCommand(): String = "kill $player"
+        }
     }
 
     sealed interface Event {
